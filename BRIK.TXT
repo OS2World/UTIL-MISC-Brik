@@ -1,0 +1,459 @@
+                                 Brik  1.0
+                            A free CRC-32 program
+                                     by
+                                 Rahul Dhesi
+
+Brik 1.0 generates and verifies 32-bit CRC values (checksums).  It is
+designed to generate CRCs for text files that are the same on all computer
+systems that use the ASCII character set, provided each text file is in the
+usual text file format for each system.  Brik 1.0 will also optionally use
+binary CRCs calculated using every byte in a file.  Such binary CRCs are
+portable across systems for binary files that are moved from system to system
+without any newline conversion.
+
+The general usage format is:
+
+     brik -gcGCbfvsWT [file] ...
+
+The brackets mean that "file", which is the name of a file, is optional.  The
+three dots indicate that more than one filenames may be typed (separated by
+blanks).  Exactly one of the options -c, -C, -g, -G, or -h is required.  The
+-h option gives a help screen.
+
+In addition to -h, the brik options available (as they appear on the help
+screen) are:
+
+   -g     look for Checksum: header, generate CRC for rest of file
+   -c     get CRC from header, verify CRC of rest of file
+   -G     generate CRC for entire file (add -b for binary files)
+   -C     verify all file CRCs from output of -G (-f is not needed)
+   -b     use binary mode--read file byte by byte, not line by line
+   -f     read filenames (wildcards ok) from specified files
+   -v     be verbose, report all results (else only errors are reported)
+   -s     be silent, say nothing, just return status code
+   -W     after generating CRC with -g, write it to original header
+   -T     include trailing empty lines, normally ignored (text mode only)
+
+
+VERIFYING CRC HEADERS
+
+The primary intended use of brik is to verify Checksum: headers in Usenet
+postings and in C and Pascal source files.  A Checksum: header looks like
+this:
+
+     Checksum: 9485762645   (verify or update this with "brik")
+
+The word "Checksum:" must occur at the beginning of a line.  It is followed
+by a colon, an optional blank, a ten-digit CRC-32 value, and any arbitrary
+optional string such as the comment shown above.  When brik is invoked with
+the syntax
+
+     brik -c file ...
+
+it will search for the Checksum: header in each specified file, read the CRC
+value from that header, calculate the CRC-32 for all lines in the file that
+occur *after* the header line, and report an error if the two values do not
+match.  Brik ignores any trailing empty lines.
+
+
+CALCULATING CRC HEADERS
+
+The command
+
+     brik -g file ...
+
+tells brik to look for the Checksum: header in each specified file, calculate
+the CRC of the lines in the file following the header, and print the CRC and
+filename without changing the file in any way.  You can also ask brik to
+update the Checksum: header with the following command:
+
+     brik -gW file ...
+
+This causes brik to fill in the newly-calculated CRC in the Checksum: header.
+If there is not enough space for the CRC value in the existing header, brik
+reports an error and does not change the existing header.  To initially add
+a Checksum: header to a file, insert a line of the following form into the
+file with a text editor:
+
+     Checksum: XXXXXXXXXX  -- this is an optional comment
+
+The word "Checksum" must be at the beginning of a line.  The ten 'X'
+characters shown can be any ten characters.  They will be later replaced by
+the calculated CRC value.  They do not need to be 'X'.  The comment
+following them is optional and can be any arbitrary string of characters
+after the CRC field, separated from it by a blank.  As an example, in a C
+source file called "main.c", you might have:
+
+     /*
+     Checksum: XXXXXXXXXX (verify or update this with brik)
+     */
+
+Once a header like this exists in the file, invoke brik as follows:
+
+     brik -gW main.c
+
+This will cause the ten 'X' characters to be replaced with the calculated
+checksum, giving something like this:
+
+     /*
+     Checksum: 1922837484 (verify or update this with brik)
+     */
+
+Later you can use the command
+
+     brik -c main.c
+
+to verify that the contents of the file following the header have the same
+CRC as the stored value.
+
+If brik is invoked with the -c or -g options and it cannot find a Checksum:
+header in a file, it prints a row of question marks.  If it is invoked with
+the -gW option and it does not find enough character positions after the
+"Checksum:" string to hold the CRC, it does not fill in the CRC and prints an
+error message.
+
+When calculating the CRC to fill in with the -gW option, brik ignores any
+trailing empty lines in the file.
+
+
+WHOLE-FILE CRCS
+
+A "whole-file" CRC calculation is done for the entire contents of a file,
+without looking for a Checksum: header.  The command
+
+     brik -G file ...
+
+asks brik to do this calculation for all specified files.  The output from
+this command is a list of files and their whole-file CRCs.  It is sent to the
+standard output stream, which in most cases is your screen.  The output
+should be saved in a file by redirecting it.  For example, the command
+"brik -G *.h *.c > crc.lst" on an MS-DOS system might yield the following in
+the output file "crc.lst":
+
+     # Whole file CRCs generated by Brik v1.0.  Use "brik -C" to verify them.
+
+     # CRC-32        filename
+     # ------        --------
+
+     2566277976      getopt.c
+      100594287      brik.c
+     1151475469      vms.c
+     3929503738      turboc.c
+     2424271922      addbfcrc.c
+     1943472856      assert.h
+     2601923477      brik.h
+
+The output of the -G option is in free format.  The output file may be edited
+by hand.  Empty lines and lines beginning with '#' will be ignored by brik
+when it is later asked to read this file.
+
+This list of filenames and whole-file CRCs may be verified by a command like
+this:
+
+     brik -C crc.lst
+
+This makes brik read the file "crc.lst", get the CRCs and filenames from it,
+do the CRC calculation again for each file, and report an error if it does
+not match the CRC recorded inside "crc.lst".
+
+**IX and MS-DOS users (and others who can pipe the output of one command into
+another) could use a command like the following to see if brik's -G and -C
+options are working:
+
+     brik -G file ... | brik -C
+
+This invokes "brik -G" on some files, sending the output to a pipe where it
+becomes the input of "brik -C".  If no filename is specified, brik reads from
+standard input, so "brik -C" will read from the pipe and concurrently verify
+all the CRCs that are being generated by "brik -G".
+
+Whole-file CRCs are normally generated in text mode, in which a file is
+treated as lines of text.  In this mode brik ignores any trailing empty lines
+in a file.  You can also generate whole-file CRCs in binary mode.  See
+below.
+
+
+BINARY VERSUS TEXT MODE 
+
+Brik can work in two different modes.  The most common mode, used by the -g,
+-c, and -G options, is text mode.  In this mode brik ignores all trailing
+empty lines in files.  (See more about this below.)
+
+In text mode, brik reads all files line by line, and forces lines to be
+terminated by a newline character of constant value before doing a CRC
+calculation.  Thus, no matter what newline character is used by your system,
+the CRC calculation will be unaffected.  This means that whether your
+operating system uses linefeeds to terminate lines (e.g. **IX), or a carriage
+return and a linefeed (e.g.  MS-DOS) or a carriage return only (e.g.
+Macintosh) or nothing but a record length field (e.g. VAX/VMS), the CRC
+calculation in text mode gives the same results.
+
+If a file is not intended to be a text file, the text mode CRC calculated by
+brik may not be reliable or the same on all systems for the same file.  Brik
+can be asked to operate in binary mode by adding a -b option to the option. 
+Binary mode is applicable only to the -G option, which acts on whole files. 
+Thus while "brik -G file..." finds whole-file CRCs of all specified files in
+text mode, "brik -Gb file ..." does the same in binary mode.  In binary mode
+brik attempts no newline compensation, but simply reads and calculates the
+CRC for all bytes in a file.  Provided a file is moved from one system to
+another without any changes, brik should calculate the same CRC for it on
+both systems.
+
+The output from "brik -Gb" includes a trailing 'b' character in each CRC, so
+"brik -C" will correctly use text or binary mode as needed, and -Cb is
+equivalent to just -C.
+
+
+TRAILING EMPTY LINES
+
+The normal behavior of brik in text mode is to ignore any trailing empty lines
+in a file when checking or updating the CRC in a Checksum: header.  An empty
+line is a line that contains nothing, not even blanks or tabs.  (Just hitting
+a carriage return when you are editing a text file usually produces an empty
+line.)   If manipulating a text file causes trailing empty lines to be added
+or deleted, the CRC calculated by brik will be unaffected.
+
+You can override this if necessary with the -T option, which makes brik
+include trailing empty lines in the CRC calculation.  For example,
+"brik -gWT" will update the Checksum: header with a CRC value that includes
+all lines in a text file.  Similarly "brik -GT" will find whole-file CRCs
+that include all lines in a text file.
+
+When brik is given the -T option, it adds a 'T' suffix to each generated CRC
+value.  Then, when the CRC is verified with "brik -c" or "brik -C", brik will
+correctly include trailing empty lines without having to be explicitly told
+to do so.
+
+In binary mode brik always reads all bytes in a file, so it does not ignore
+trailing empty lines, and the -T switch is not needed.
+
+The -T and -b options are mutually exclusive, since the first is used only
+for text mode and the second is used only for binary mode.  If both are
+given, whichever is used later overrides the first.  This "-bT" is equivalent
+to "-T" and "-Tb" is equivalent to "-T".
+
+
+FILENAME CONVENTIONS
+
+Under MS-DOS and VAX/VMS, wildcards are allowed on the command line and will
+be expanded by brik.  Under **IX, wildcards are expected to be expanded by
+the shell and are not expanded by brik.
+
+If no filename is given, brik reads its standard input.  By default this is
+keyboard input, but it is expected that input will usually be redirected to
+come from a file or a pipe.  Also, if a filename is explicitly specified as a
+dash ("-"), it stands for standard input.
+
+Thus the following five commands (valid under the **IX operating system)
+
+     brik -c myfile           # verify "myfile"
+     brik -c < myfile         # verify stdin, which is "myfile"
+     cat myfile | brik -c     # verify stdin, which is a pipe
+     brik -c - < myfile       # verify "-", which is stdin, which is "myfile"
+     cat myfile | brik -c -   # verify "-", which is stdin, which is a pipe
+
+all have the effect of verifying the Checksum: header in the file "myfile".
+
+Standard input can also be read by "brik -C".  For example, suppose we have
+already given the command
+
+     brik -G *.c *.h > crc.lst
+
+to create a file called "crc.lst" that contains a list of whole-file CRCs.  We
+can now verify the integrity of these files with any of the following
+commands:
+
+     brik -C crc.lst          # read "crc.lst"
+     brik -C < crc.lst        # read stdin, which is "crc.lst"
+     brik -C - < crc.lst      # read "-", which is stdin, which is "crc.lst"
+     cat crc.lst | brik -C    # read stdin, which is a pipe
+     cat crc.lst | brik -C -  # read "-" which is stdin which is a pipe
+
+
+INDIRECT FILE NAMING
+
+The -f option allows you to have filenames in a list rather than on the
+command line.  For example, suppose you want to generate whole-file CRCs of
+files whose names are selected by some other program.  You could use "find"
+(under **IX) or "stuff" (under MS-DOS) to generate a list of filenames.  When
+the -f option is given, brik reads filenames, one per line, from the file(s)
+specified.  Thus you could do the following:
+
+     find . -mtime +3 -print > flist
+     brik -Gf flist > crc.lst
+
+The first command asks "find" to generate a list of names of all files that
+were modified more than 3 days ago, and sends the output to the file "flist".
+The contents of "flist" might now look like this, as an example:
+
+   ./sez.doc
+   ./brik.doc
+   ./stuff.doc
+   ./looz.doc
+   ./fiz.man
+
+The second command above asks brik to read the file called "flist", get a 
+list of filenames from it, one per line, and generate the whole-file CRC of
+each of these files.  We additionally redirect the output of "brik -Gf" to
+the file called "crc.lst".  Given the above contents of "flist", the following
+two commands are exactly equivalent:
+
+     brik -Gf flist > crc.lst
+     brik -G ./sez.doc ./brik.doc ./stuff.doc ./looz.doc ./fiz.man > crc.lst
+
+The advantage of the -f option is that once you have filenames in a file,
+you need not type them again at the command line.  The -f option also allows
+you to feed brik filenames generated by another program through a pipe.
+Consider this command:
+
+     find . -mtime +3 -print | brik -Gf - > crc.lst
+
+Under **IX this concurrently invokes both "find" and brik.  As find
+generates a filename and sends it to its standard output (a pipe), brik reads
+the filename from its standard input and generates its whole-file CRC.
+The following pipeline
+
+     find . -mtime +3 -print | brik -Gf - | brik -C -
+
+invokes "find" to generate filenames, brik to print the whole-file CRCs of
+those files, and brik again to immediately verify them.
+
+Under MS-DOS and VAX/VMS (and any other operating system under which brik has
+been installed to expand wildcards itself), a file specified by the -f option
+can itself contain wildcards in the filenames.  For example, suppose the file
+"wildfile" contains the following lines:
+
+     /bin/*.exe
+     /bin/*.com
+     /doc/*.doc
+
+Now if we invoke brik with the command
+
+     brik -Gf wildfile
+
+it will read filespecs from "wildfile", expand wildcards in each filespec,
+and generate whole-file CRCs for all matching files.
+
+If you are checking whole-file CRCs with the -C option, you do *not* normally
+need to use the -f option, as the -f option introduces an additional level of
+file naming indirection.  For example, the command
+
+     brik -C crc.lst
+
+takes a list of CRCs and filenames from "crc.lst" and verifies them. 
+However, the command
+
+     brik -Cf master.lst
+
+does not do the same thing.  Instead, it takes a list of files from
+"master.lst", looks inside each of *those* files for a list of CRCs and
+filenames, and verifies them.
+
+As an example of the use of -Cf, consider this sequence:
+
+     brik -Gb /bin/*.exe > exelist
+     brik -Gb /bin/*.com > comlist
+     brik -GT /doc/*.doc > doclist
+     brik -G  /doc/*.man > manlist
+
+Now we have four files called "exelist", "comlist", "doclist", and "manlist"
+containing whole-file CRCs of various types.  We can test the integrity of
+files listed in these in four separate commands like this:
+
+     brik -C exelist
+     brik -C comlist
+     brik -C doclist
+     brik -C manlist
+
+But we could also do this in a single step by first creating a file called
+"biglist" that contains the names of these four files:
+
+     exelist
+     comlist
+     doclist
+     manlist
+
+and then use -Cf thus:
+
+     brik -Cf biglist
+
+This causes brik to read filenames from "biglist", look inside each of those
+files ("exelist", "comlist", "doclist", and "manlist") and check the CRCs
+found there.  A **IX example to do the same thing in a more compact
+way might be:
+
+     cat exelist comlist doclist manlist | brik -Cf -
+
+
+SILENT VERSUS VERBOSE
+
+Brik accepts options -s and -v that cause it to be more silent or more
+verbose than usual.
+
+Normally brik prints a message only if it detects an error.  For example,
+if you give the command "brik -c *.c *.h" and brik finds that all Checksum:
+headers contain CRCs that match the calculated value, it prints nothing.
+
+The -v switch makes brik print a message for each file tested that contains the
+word "ok" if stored and calculated CRCs matched and "BAD" if they did not.
+
+In all messages reporting file CRCs, brik prints the actual CRC it calculated,
+or a row of question marks if it could not calculate one.  Brik fails to
+calculate a CRC if it is trying to calculate a header-based CRC (commands
+-c and -g) but does not find a Checksum: header in a file.
+
+The -s switch tells brik to be silent.  This will cause nothing to be printed
+if brik does not find a Checksum header or if CRCs don't match.  However, the
+status code on exit is still set.  The -s option is useful for invoking brik
+from within a shell script (**IX) or a batch file (MS-DOS) and later testing
+the error code it returned when it exited.
+
+The -s switch does not suppress the error message printed if brik is given a
+filename and the file cannot be found.  For example, if the command
+"brik -cs myfile" is given but "myfile" does not exist, brik will print an
+error message even though the -s option was given.
+
+
+VAX/VMS BUGS
+
+o    Under VAX/VMS, file manipulation is unpredictable and the VAX/VMS C
+     runtime library in particular is very unreliable.  One result is that
+     under VAX/VMS, the -gW option will work only for stream-LF files, which
+     are the only type of file that VAX/VMS seems to handle correctly.
+     Fortunately, the -c option will correctly work for VAX/VMS standard
+     text files.
+
+o    The VAX/VMS implementation of brik 1.0 simply ignores filenames that
+     correspond to nonexistent files instead of giving an error message.
+     This bug will be fixed as soon as I figure out why wildcard expansion
+     code that used to work properly with VAX/VMS a year ago doesn't work
+     any more.
+
+o    To avoid annoying error messages, brik under VAX/VMS always exits with
+     a status code of 1.
+
+o    Due to a problem in the VAX/VMS command interpreter, if any uppercase
+     option characters are typed (e.g. -C, -G, -T), brik will not recognize
+     them as uppercase unless they are enclosed in double quotes.  An
+     example of a correct command under VAX/VMS:
+
+          brik "-GT" *.*
+
+     An example of a command that won't work:
+
+          brik -GT *.*
+
+
+PROGRAM LIMITATIONS
+
+Brik 1.0 is designed to work with computer systems that use the 7-bit ASCII
+character set and 8-bit bytes with the eighth (parity) bit set to zero.
+
+Brik 1.0 has not been tested with computer systems that use ASCII characters
+with the eighth bit set or those that use EBCDIC characters.  Although
+it will calculate a CRC on such machines, the probability of this CRC being
+the same as the one calculated on machines that use 7-bit ASCII is
+approximately 0.00000000023.
+
+                                    -- Rahul Dhesi
+                                       1989/03/13

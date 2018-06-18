@@ -1,0 +1,37 @@
+# Makefile for brik
+# ::[[ @(#) makefile 1.7 89/03/09 02:47:07 ]]::
+
+# Please see brik.h for configuration options.
+
+# "make brik"     -- makes brik in current directory
+# "make install"  -- makes brik, then moves it into DESTDIR defined below
+# "make clean"    -- deletes object files and executable brik from current dir
+
+# Directory where we want to move executable brik on "make install"
+DESTDIR=/usr/local/bin/.
+
+# CFLAGS are flags for the C compiler.  LDFLAGS are flags for the loader.
+# They are defined by the mk* scripts, so they need not be changed here.
+
+CFLAGS=
+LDFLAGS=
+
+CC=cc
+
+.c.o :
+	$(CC) -c $(CFLAGS) $*.c
+
+OBJS = brik.o addbfcrc.o
+
+brik: $(OBJS)
+	cc $(LDFLAGS) -o brik $(OBJS)
+
+brik.o: brik.c brik.h assert.h
+
+addbfcrc.o: addbfcrc.c
+
+install: brik
+	mv brik $(DESTDIR)/brik
+
+clean:
+	/bin/rm -f $(OBJS) core brik

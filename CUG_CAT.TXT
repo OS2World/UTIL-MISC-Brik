@@ -1,0 +1,27 @@
+This Archieve has been downloaded from C_BBS 2:284/203,  Aka 77:8310/113.
+Specialised in the C- & Assembly language.
+
+You can reach us on 1200 / 2400 baud at 04930-20361/20792.
+Sysop: Mathieu Salimans
+
+Those who are paying get a C_BBS membership.
+For the amount to pay and the privileges, please download the file TARIF.ZIP
+from filearea <A> in filesmenu <G>, or read the bulletins.
+In this file you will find the additional amounts to pay for the next sources:
+
+1) Volumes imported from the CUG_USA.
+2) Sources from Dr Dobbs Journal.
+
+Payable to:
+C_BBS Software,
+P.O. Box 280,
+5750 AG  DEURNE.
+
+Postbank: 3455520,
+Bank: 45.18.35.581 both belonging to C_BBS Software, Deurne,
+
+You also may order the complete C Sources PD/Shareware and Magazine-sources 
+catalogue on disk (more than 60 MBytes) by transferring F 15,- to us...
+
+All our sources are for developement and educational purposes only and
+are to be used on your own risk...

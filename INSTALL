@@ -1,0 +1,96 @@
+                          
+                          INSTALLING BRIK 1.0
+
+The following files should be in this package.  The files brik.exe and
+tcconfig.tc are binary files.  All other files are text files with
+lines terminated by linefeeds.
+
+   bytes      name             description
+   -----      ----             -----------
+    4104      Install          installation instructions
+    6391      addbfcrc.c       source
+     754      assert.h         source
+   26440      brik.c           source
+   18671      brik.doc         documentation
+   16710      brik.exe         executable for MS-DOS
+    7035      brik.h           source
+      66      brik.prj         project file for MS-DOS Turbo C 1.0
+     675      descrip.mms      makefile for VAX/VMS 4.7
+    2808      getopt.c         source for Turbo C 1.0 and VAX/VMS 4.7
+     403      makebrik.com     makefile for VAX/VMS 4.7
+     829      makefile         makefile for **IX
+      86      mkbsd            make script for 4.xBSD
+     137      mksysv           make script for System V
+     127      mkuport          make script for Microport System V/AT 2.2
+      28      options.opt      linker options for VAX/VMS 4.7
+    1380      tcconfig.tc      configuration file for MS-DOS Turbo C 1.0
+    8118      turboc.c         source for MS-DOS Turbo C 1.0
+    2419      vms.c            source file for VAX/VMS 4.7
+
+Brik is believed to compile and execute in the following environments:
+
+1.   MS-DOS 3.x, Turbo C 1.0
+2.   VAX/VMS 4.7 with VAX/VMS C 2.4
+3.   4.3BSD from Berkeley on a VAX-11/785
+4.   Microport System V/AT version 2.2
+
+Make sure all the needed files are in the current directory.  Then follow
+instructions below for your specific type of system.  If doing so doesn't
+give you a running copy of brik, read brik.h and experiment with the various
+compilation options.
+
+1.   MS-DOS, Turbo C 1.0
+
+Use the supplied tcconfig.tc configuration file.  Load the interactive
+tc.exe compiler, revise those options that are different for your
+system, and compile.  I don't know if this will work with Turbo C 2.0.
+
+2.   VAX/VMS
+
+2.1.   If you have DEC's make utility called "mms", proceed as follows:
+
+     a.   Delete "makefile" so mms won't get confused
+     b.   Type "mms" at the VMS prompt
+     c.   If all goes well, mms will compile and link the necessary files,
+          ending by creating "brik.exe" in the current directory.
+     d.   Move "brik.exe" wherever you want it and define a symbol with
+          a command line of the following type:
+
+               $ brik :== $my$disk:[bindir]brik.exe
+
+         where my$disk is the name of your device and bindir is the name
+         of the directory in which "brik.exe" is kept.
+
+2.2.  If you don't have "mms", use the command file supplied.  Invoke it as:
+
+     $ @makebrik
+
+When it exits, brik.exe should have been created in your current
+directory, and the symbol "brik" should also have been defined for
+you.  If you move brik.exe to another directory be sure to redefine the
+symbol "brik" correctly as described above in part I.
+
+Be sure to read the section in the manul on VAX/VMS bugs.
+
+3.   4.xBSD
+
+Invoke the script "mkbsd" with the command "sh mkbsd".  Finally move
+the program "brik" into an appropriate directory and make sure that
+that directory is in your execution search path.
+
+4.   System V
+
+Invoke the script "mksysv" (for generic System V) or "mkuport" (for
+Microport System V/AT) with the command "sh mksysv" or "sh mkuport".
+The "mkuport" script will try to move the compiled "brik" into
+/usr/local/bin/brik so revise it if you don't want this done.  The
+"mksysv" script will create "brik" in the current directory ready to be
+moved to an appropriate directory in your search path.
+
+The "mkuport" script compiles brik using the large memory model,
+because an unexpected bug in Microport System V/AT made all my small-
+model libraries vanish and I haven't had a chance to restore them from
+backups.  I suspect compiling in the small memory model will work.
+
+                                       -- Rahul Dhesi
+                                          1989/03/13
